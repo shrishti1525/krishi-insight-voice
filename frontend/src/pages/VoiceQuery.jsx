@@ -1,21 +1,19 @@
 import { useState } from 'react'
 import Card from '../components/ui/Card'
-import Button from '../components/ui/Button'
-import { Mic, Square } from 'lucide-react'
+import { Mic, Square, AlertTriangle } from 'lucide-react'
 
 const LANGUAGES = ['English', 'Hindi', 'Punjabi', 'Marathi']
 
 function VoiceQuery() {
-  const [status, setStatus] = useState('idle') // idle | listening | processing | answered
+  const [status, setStatus] = useState('idle') // idle | listening | processing | answered | error
   const [language, setLanguage] = useState('English')
   const [messages, setMessages] = useState([])
 
   const handleMicClick = () => {
-    if (status === 'idle' || status === 'answered') {
+    if (status === 'idle' || status === 'answered' || status === 'error') {
       setStatus('listening')
     } else if (status === 'listening') {
       setStatus('processing')
-      // Simulate processing → answer (replace with real API call later)
       setTimeout(() => {
         setMessages((prev) => [
           ...prev,
@@ -32,6 +30,7 @@ function VoiceQuery() {
     listening: 'Listening...',
     processing: 'Processing...',
     answered: 'Tap to ask again',
+    error: 'Something went wrong — tap to try again',
   }
 
   return (
@@ -49,12 +48,17 @@ function VoiceQuery() {
         </select>
       </div>
 
-      {/* Transcript */}
       <Card className="min-h-[300px] flex flex-col gap-3">
-        {messages.length === 0 && (
+        {messages.length === 0 && status !== 'error' && (
           <p className="text-gray-400 text-sm text-center my-auto">
             Your conversation will appear here
           </p>
+        )}
+        {status === 'error' && (
+          <div className="flex items-center gap-2 text-red-600 text-sm my-auto justify-center">
+            <AlertTriangle size={18} />
+            Couldn't process that. Please try again.
+          </div>
         )}
         {messages.map((msg, i) => (
           <div
@@ -70,7 +74,6 @@ function VoiceQuery() {
         ))}
       </Card>
 
-      {/* Mic control */}
       <div className="flex flex-col items-center gap-3 py-4">
         <button
           onClick={handleMicClick}
@@ -80,6 +83,8 @@ function VoiceQuery() {
               ? 'bg-red-500 animate-pulse'
               : status === 'processing'
               ? 'bg-gray-300'
+              : status === 'error'
+              ? 'bg-red-600 hover:bg-red-700'
               : 'bg-primary hover:bg-green-800'
           }`}
         >
@@ -89,7 +94,9 @@ function VoiceQuery() {
             <Mic size={24} className="text-white" />
           )}
         </button>
-        <p className="text-sm text-gray-500">{statusLabel[status]}</p>
+        <p className={`text-sm ${status === 'error' ? 'text-red-600' : 'text-gray-500'}`}>
+          {statusLabel[status]}
+        </p>
       </div>
     </div>
   )
