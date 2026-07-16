@@ -2,19 +2,26 @@ import { useState } from 'react'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Badge from '../components/ui/Badge'
-import { UploadCloud, Leaf } from 'lucide-react'
+import { UploadCloud, Leaf, AlertTriangle } from 'lucide-react'
 
 function CropHealth() {
   const [preview, setPreview] = useState(null)
-  const [status, setStatus] = useState('idle') // idle | analyzing | done
+  const [status, setStatus] = useState('idle') // idle | analyzing | done | error
   const [result, setResult] = useState(null)
 
   const handleFile = (file) => {
     if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setStatus('error')
+      setPreview(null)
+      return
+    }
+
     setPreview(URL.createObjectURL(file))
     setStatus('analyzing')
     setResult(null)
-    // Simulate analysis — replace with real API call later
+
     setTimeout(() => {
       setResult({
         issue: 'Early Leaf Blight',
@@ -25,11 +32,16 @@ function CropHealth() {
     }, 1800)
   }
 
+  const reset = () => {
+    setPreview(null)
+    setStatus('idle')
+    setResult(null)
+  }
+
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
       <h2 className="text-2xl font-bold">Crop Health</h2>
 
-      {/* Upload area */}
       <Card>
         <label
           htmlFor="cropImage"
@@ -53,7 +65,15 @@ function CropHealth() {
         />
       </Card>
 
-      {/* Result / loading state */}
+      {status === 'error' && (
+        <Card className="border-red-200 bg-red-50 flex items-center gap-3">
+          <AlertTriangle size={20} className="text-red-500 shrink-0" />
+          <p className="text-sm text-red-700">
+            That file couldn't be read as an image. Please upload a JPG or PNG photo.
+          </p>
+        </Card>
+      )}
+
       {status === 'analyzing' && (
         <Card className="animate-pulse">
           <p className="text-sm text-gray-500">Analyzing image...</p>
@@ -68,7 +88,7 @@ function CropHealth() {
             <Badge tone="warning">{result.confidence}% confidence</Badge>
           </div>
           <p className="text-sm text-gray-600 mb-4">{result.recommendation}</p>
-          <Button variant="secondary" onClick={() => { setPreview(null); setStatus('idle'); setResult(null) }}>
+          <Button variant="secondary" onClick={reset}>
             Analyze another photo
           </Button>
         </Card>
